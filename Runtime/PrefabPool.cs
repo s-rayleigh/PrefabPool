@@ -16,10 +16,6 @@ namespace Rayleigh.PrefabPool
         /// </summary>
         private readonly Dictionary<int, InternalPool> relations;
 
-        private static PrefabPool instance;
-
-        public static PrefabPool Instance => instance ??= new();
-
         /// <summary>
         /// Creates new prefab pool.
         /// </summary>
