@@ -1,18 +1,32 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Rayleigh.PrefabPool.Tests
 {
 	public class PrefabPoolTests
 	{
 		private Transform prefab;
+		
+		private TestComponent secondPrefab;
 
 		[OneTimeSetUp]
 		public void Setup()
 		{
 			this.prefab = new GameObject().transform;
+			this.secondPrefab = new GameObject().AddComponent<TestComponent>();
+		}
+
+		[Test]
+		public void GlobalPool()
+		{
+			var instance = GlobalPrefabPool.Get(this.prefab);
+			AssertCount(GlobalPrefabPool.Instance, this.prefab, 1, 0, 1);
+			GlobalPrefabPool.Release(instance);
+			AssertCount(GlobalPrefabPool.Instance, this.prefab, 1, 1, 0);
 		}
 		
 		[Test]
@@ -86,7 +100,6 @@ namespace Rayleigh.PrefabPool.Tests
 		[Test]
 		public void GetReleaseMultipleInstancesTwoPrefabs()
 		{
-			var secondPrefab = new GameObject().AddComponent<TestComponent>();
 			var pool = new PrefabPool();
 			var firstTaken = new Queue<Transform>();
 			var secondTaken = new Queue<TestComponent>();
@@ -94,17 +107,17 @@ namespace Rayleigh.PrefabPool.Tests
 			for(var i = 0; i < 70; i++)
 			{
 				firstTaken.Enqueue(pool.Get(this.prefab));
-				secondTaken.Enqueue(pool.Get(secondPrefab));
+				secondTaken.Enqueue(pool.Get(this.secondPrefab));
 			}
 			
 			AssertCount(pool, this.prefab, 70, 0, 70);
-			AssertCount(pool, secondPrefab, 70, 0, 70);
+			AssertCount(pool, this.secondPrefab, 70, 0, 70);
 			
 			for(var i = 0; i < 30; i++) pool.Release(firstTaken.Dequeue());
 			for(var i = 0; i < 55; i++) pool.Release(secondTaken.Dequeue());
 			
 			AssertCount(pool, this.prefab, 70, 30, 40);
-			AssertCount(pool, secondPrefab, 70, 55, 15);
+			AssertCount(pool, this.secondPrefab, 70, 55, 15);
 		}
 
 		[Test]
@@ -123,6 +136,76 @@ namespace Rayleigh.PrefabPool.Tests
 			Assert.That(activeInstance.gameObject.activeSelf, Is.True);
 		}
 
+		[UnityTest]
+		public IEnumerator DestructionOnRelease()
+		{
+			var pool = new PrefabPool();
+			pool.Prewarm(this.prefab, 10);
+			var instance = pool.Get(this.prefab);
+			pool.Configure(this.prefab, new(5));
+			pool.Release(instance);
+			
+			// Required because Unity destroys the object in the end of frame, so we do the check on the next frame.
+			yield return null;
+			
+			Assert.That((bool)instance, Is.False);
+		}
+		
+		[Test]
+		public void ClearInactive()
+		{
+			var pool = new PrefabPool();
+			pool.Prewarm(this.prefab, 100);
+			pool.Get(this.prefab);
+			pool.ClearInactive(this.prefab);
+			AssertCount(pool, this.prefab, 1, 0, 1);
+		}
+
+		[Test]
+		public void ClearInactiveTwoPrefabs()
+		{
+			var pool = new PrefabPool();
+			pool.Prewarm(this.prefab, 100);
+			pool.Prewarm(this.secondPrefab, 100);
+			pool.Get(this.prefab);
+			pool.Get(this.secondPrefab);
+			pool.ClearInactive();
+			AssertCount(pool, this.prefab, 1, 0, 1);
+			AssertCount(pool, this.secondPrefab, 1, 0, 1);
+		}
+		
+		[Test]
+		public void ParametersCallbacks()
+		{
+			var pool = new PrefabPool();
+			Transform created = null, gotten = null, released = null, destroyed = null;
+
+			pool.Configure(this.prefab, new(onCreate: t => created = t, onGet: t => gotten = t,
+				onRelease: t => released = t, onDestroy: t => destroyed = t));
+
+			var instance = pool.Get(this.prefab);
+			pool.Release(instance);
+			pool.ClearInactive(this.prefab);
+			
+			Assert.That(created, Is.EqualTo(instance));
+			Assert.That(gotten, Is.EqualTo(instance));
+			Assert.That(released, Is.EqualTo(instance));
+			Assert.That(destroyed, Is.EqualTo(instance));
+		}
+
+		[Test]
+		public void InterfaceEventListeners()
+		{
+			var pool = new PrefabPool();
+			var instance = pool.Get(this.secondPrefab);
+			pool.Release(instance);
+			pool.ClearInactive(this.secondPrefab);
+
+			Assert.That(instance.GetCalled, Is.True);
+			Assert.That(instance.ReleaseCalled, Is.True);
+			Assert.That(instance.DestroyCalled, Is.True);
+		}
+		
 		private static void AssertCount(PrefabPool pool, Component prefab, int all, int inactive, int active)
 		{
 			Assert.That(pool.CountAll(prefab), Is.EqualTo(all));
