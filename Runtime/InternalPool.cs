@@ -76,8 +76,12 @@ namespace Rayleigh.PrefabPool
 
 		public void Release(Component obj)
 		{
-			// Silently return if the object is null or destroyed.
-			if(!obj) return;
+			if(!obj)
+			{
+				// Decrement instances count and return if the releasing object is null or destroyed.
+				this.CountAll -= 1;
+				return;
+			}
 			
 			this.parameters.InvokeOnRelease(obj);
 			if(obj is IPoolReleaseHandler h) h.OnPoolRelease();
