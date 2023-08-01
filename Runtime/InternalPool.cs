@@ -5,13 +5,13 @@ using Object = UnityEngine.Object;
 
 namespace Rayleigh.PrefabPool
 {
-	internal sealed class InternalPool<T> : IInactiveCleaner where T : Component
+	internal sealed class InternalPool
 	{
-		private readonly T prefab;
+		private readonly Component prefab;
 		
 		private IPoolParameters parameters;
 		
-		private readonly Stack<T> stack;
+		private readonly Stack<Component> stack;
 
 		public int CountAll { get; private set; }
 
@@ -19,7 +19,7 @@ namespace Rayleigh.PrefabPool
 
 		public int CountActive => this.CountAll - this.CountInactive;
 		
-		public InternalPool(T prefab, PoolParameters<T> parameters)
+		public InternalPool(Component prefab, IPoolParameters parameters)
 		{
 			this.prefab = prefab;
 			this.parameters = parameters;
@@ -50,7 +50,7 @@ namespace Rayleigh.PrefabPool
 			}
 		}
 
-		public bool TryGet(out T item)
+		public bool TryGet(out Component item)
 		{
 			if(this.stack.Count > 0)
 			{
@@ -74,7 +74,7 @@ namespace Rayleigh.PrefabPool
 			return true;
 		}
 
-		public void Release(T obj)
+		public void Release(Component obj)
 		{
 			// Silently return if the object is null or destroyed.
 			if(!obj) return;
@@ -107,7 +107,7 @@ namespace Rayleigh.PrefabPool
 			}
 		}
 
-		private T CreateNewInstance()
+		private Component CreateNewInstance()
 		{
 			var instance = Object.Instantiate(this.prefab);
 			Object.DontDestroyOnLoad(instance.gameObject);
@@ -115,7 +115,7 @@ namespace Rayleigh.PrefabPool
 			return instance;
 		}
 		
-		private void DestroyObject(T obj)
+		private void DestroyObject(Component obj)
 		{
 			if(obj is IPoolDestroyHandler dh) dh.OnPoolDestroy();
 			this.parameters.InvokeOnDestroy(obj);

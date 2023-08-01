@@ -9,12 +9,12 @@ namespace Rayleigh.PrefabPool
         /// <summary>
         /// Internal pools, one for each prefab used. The key is the instance ID of the prefab used for the pool.
         /// </summary>
-		private readonly Dictionary<int, object> pools;
+		private readonly Dictionary<int, InternalPool> pools;
 
         /// <summary>
         /// Stores relations between objects taken from the pool and corresponding internal pools.
         /// </summary>
-        private readonly Dictionary<int, object> relations;
+        private readonly Dictionary<int, InternalPool> relations;
 
         private static PrefabPool instance;
 
@@ -39,19 +39,19 @@ namespace Rayleigh.PrefabPool
         public void Configure<T>(T prefab, PoolParameters<T> parameters) where T : Component =>
             this.GetOrCreatePool(prefab).SetParameters(parameters);
 
-        public void Prewarm<T>(T prefab, int amount) where T : Component =>
-            this.GetOrCreatePool(prefab).Prewarm(amount);
+        public void Prewarm(Component prefab, int amount) => this.GetOrCreatePool(prefab).Prewarm(amount);
 
-        public int CountAll<T>(T prefab) where T : Component => this.GetOrCreatePool(prefab).CountAll;
+        public int CountAll(Component prefab) => this.GetOrCreatePool(prefab).CountAll;
         
-        public int CountActive<T>(T prefab) where T : Component => this.GetOrCreatePool(prefab).CountActive;
+        public int CountActive(Component prefab) => this.GetOrCreatePool(prefab).CountActive;
         
-        public int CountInactive<T>(T prefab) where T : Component => this.GetOrCreatePool(prefab).CountInactive;
+        public int CountInactive(Component prefab) => this.GetOrCreatePool(prefab).CountInactive;
 
         public bool TryGet<T>(T prefab, out T obj) where T : Component
         {
             var pool = this.GetOrCreatePool(prefab);
-            var result = pool.TryGet(out obj);
+            var result = pool.TryGet(out var cmp);
+            obj = (T)cmp;
             if(!result) return false;
             this.relations[obj.GetInstanceID()] = pool;
             return true;
@@ -61,7 +61,7 @@ namespace Rayleigh.PrefabPool
             ? obj
             : throw new InvalidOperationException("The pool for this prefab has reached its max capacity.");
 
-        public void Release<T>(T obj) where T : Component
+        public void Release(Component obj)
         {
             if(!this.relations.Remove(obj.GetInstanceID(), out var poolObj))
             {
@@ -69,28 +69,28 @@ namespace Rayleigh.PrefabPool
                     "The specified object was not created by this pool, so it cannot be released.");
             }
 
-            ((InternalPool<T>)poolObj).Release(obj);
+            poolObj.Release(obj);
         }
 
-        public void ClearInactive<T>(T prefab) where T : Component => this.GetOrCreatePool(prefab).ClearInactive();
+        public void ClearInactive(Component prefab) => this.GetOrCreatePool(prefab).ClearInactive();
         
         public void ClearInactive()
         {
-            foreach(var pool in this.pools.Values) ((IInactiveCleaner)pool).ClearInactive();
+            foreach(var pool in this.pools.Values) pool.ClearInactive();
         }
 
-        private InternalPool<T> GetOrCreatePool<T>(T prefab) where T : Component
+        private InternalPool GetOrCreatePool(Component prefab)
         {
             var prefabId = prefab.GetInstanceID();
-            InternalPool<T> pool;
+            InternalPool pool;
             
             if(this.pools.TryGetValue(prefabId, out var objPool))
             {
-                pool = (InternalPool<T>)objPool;
+                pool = objPool;
             }
             else
             {
-                pool = new(prefab, new(int.MaxValue));
+                pool = new(prefab, new DefaultPoolParameters());
                 this.pools.Add(prefabId, pool);
             }
             

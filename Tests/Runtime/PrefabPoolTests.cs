@@ -123,7 +123,7 @@ namespace Rayleigh.PrefabPool.Tests
 			Assert.That(activeInstance.gameObject.activeSelf, Is.True);
 		}
 
-		private static void AssertCount<T>(PrefabPool pool, T prefab, int all, int inactive, int active) where T : Component
+		private static void AssertCount(PrefabPool pool, Component prefab, int all, int inactive, int active)
 		{
 			Assert.That(pool.CountAll(prefab), Is.EqualTo(all));
 			Assert.That(pool.CountInactive(prefab), Is.EqualTo(inactive));
