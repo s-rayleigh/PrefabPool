@@ -1,0 +1,19 @@
+{
+  "name": "com.rayleigh.prefab-pool",
+  "version": "1.0.0",
+  "displayName": "Prefab Pool",
+  "description": "Simple and convenient pooling for the objects instantiated from prefabs.",
+  "keywords": [
+    "pool",
+    "object",
+    "object pool",
+    "GameObjects",
+    "optimization",
+    "prefab"
+  ],
+  "author": {
+    "name": "Vladyslav Pashaiev",
+    "email": "rayleigh@protonmail.com",
+    "url": "https://github.com/s-rayleigh"
+  }
+}
