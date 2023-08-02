@@ -37,12 +37,12 @@ namespace Rayleigh.PrefabPool
 			this.parameters = parameters;
 		}
 
-		public void Prewarm(int amount)
+		public void Prewarm(int number)
 		{
-			amount = Mathf.Min(amount, this.parameters.MaxCapacity - this.CountAll);
-			this.CountAll += amount;
+			number = Mathf.Min(number, this.parameters.MaxCapacity - this.CountAll);
+			this.CountAll += number;
 
-			for(var i = 0; i < amount; i++)
+			for(var i = 0; i < number; i++)
 			{
 				var instance = this.CreateNewInstance();
 				instance.gameObject.SetActive(false);

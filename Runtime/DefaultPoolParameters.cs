@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace Rayleigh.PrefabPool
 {
+	/// <summary>
+	/// Default parameters for the pool.
+	/// </summary>
 	public struct DefaultPoolParameters : IPoolParameters
 	{
 		public int MaxCapacity => int.MaxValue;
