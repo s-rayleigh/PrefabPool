@@ -2,7 +2,8 @@
   "name": "com.rayleigh.prefab-pool",
   "version": "1.0.0",
   "displayName": "Prefab Pool",
-  "description": "Simple and convenient pooling for the objects instantiated from prefabs.",
+  "description": "Efficient and lazy object pool, designed to use with the prefabs referenced by a component.",
+  "documentationUrl": "https://github.com/s-rayleigh/PrefabPool",
   "keywords": [
     "pool",
     "object",
