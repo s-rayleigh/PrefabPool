@@ -1,4 +1,6 @@
 # Prefab Pool
+[![openupm](https://img.shields.io/npm/v/com.rayleigh.prefab-pool?label=openupm&registry_uri=https://package.openupm.com)](https://openupm.com/packages/com.rayleigh.prefab-pool/)
+
 Provides efficient and lazy object pool, designed to use with the prefabs referenced by a component.
 
 Features:
@@ -14,8 +16,11 @@ object pools, where a dedicated pool is allocated per object type, but a solutio
 is a necessity to create a large number of instances of different prefabs.
 
 # Installation
-Add the package to your project via [UPM](https://docs.unity3d.com/Manual/upm-ui-giturl.html) using this link:
-https://github.com/s-rayleigh/PrefabPool.git
+Follow the guide by [this link](https://openupm.com/packages/com.rayleigh.prefab-pool/#modal-manualinstallation) to 
+install the package using OpenUPM (recommended).
+
+Or you can add the package to your project via [UPM](https://docs.unity3d.com/Manual/upm-ui-giturl.html) using 
+this Git URL: https://github.com/s-rayleigh/PrefabPool.git
 
 # Usage
 You can access the pool in either of these ways:
