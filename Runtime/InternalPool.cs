@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -13,17 +14,22 @@ namespace Rayleigh.PrefabPool
 		
 		private readonly Stack<Component> stack;
 
+		/// <inheritdoc cref="PrefabPool.itemsParent"/>
+		[MaybeNull]
+		private readonly Transform itemsParent;
+		
 		public int CountAll { get; private set; }
 
 		public int CountInactive => this.stack.Count;
 
 		public int CountActive => this.CountAll - this.CountInactive;
 		
-		public InternalPool(Component prefab, IPoolParameters parameters)
+		public InternalPool(Component prefab, IPoolParameters parameters, [MaybeNull] Transform itemsParent)
 		{
 			this.prefab = prefab;
 			this.parameters = parameters;
 			this.stack = new();
+			this.itemsParent = itemsParent;
 		}
 
 		/// <summary>
@@ -93,7 +99,7 @@ namespace Rayleigh.PrefabPool
 			}
 
 			var tr = obj.transform;
-			tr.SetParent(null, false);
+			tr.SetParent(this.itemsParent, false);
 
 			var go = obj.gameObject;
 			Object.DontDestroyOnLoad(go);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
 namespace Rayleigh.PrefabPool
@@ -20,12 +21,24 @@ namespace Rayleigh.PrefabPool
         private readonly Dictionary<int, InternalPool> relations;
 
         /// <summary>
+        /// An object used as a parent for items returned to the pool.
+        /// </summary>
+        [MaybeNull]
+        private readonly Transform itemsParent;
+        
+        /// <summary>
         /// Creates new prefab pool.
         /// </summary>
-        public PrefabPool()
+        /// <param name="itemsParentName">
+        /// Name of the object to use as a parent for items returned to the pool.
+        /// Null or empty string will result in not creating such an object.
+        /// </param>
+        public PrefabPool(string itemsParentName = null)
         {
             this.pools = new();
             this.relations = new();
+            if (!string.IsNullOrEmpty(itemsParentName))
+                this.itemsParent = new GameObject(itemsParentName).transform;
         }
 
         /// <summary>
@@ -137,7 +150,7 @@ namespace Rayleigh.PrefabPool
             }
             else
             {
-                pool = new(prefab, new DefaultPoolParameters());
+                pool = new(prefab, new DefaultPoolParameters(), this.itemsParent);
                 this.pools.Add(prefabId, pool);
             }
             
