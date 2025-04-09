@@ -17,6 +17,12 @@ namespace Rayleigh.PrefabPool
 		/// <inheritdoc cref="PrefabPool.itemsParent"/>
 		[MaybeNull]
 		private readonly Transform itemsParent;
+
+		/// <summary>
+		/// An object used for grouping of returned items if that's enabled in the pool configuration.
+		/// </summary>
+		[MaybeNull]
+		private Transform groupParent;
 		
 		public int CountAll { get; private set; }
 
@@ -41,6 +47,19 @@ namespace Rayleigh.PrefabPool
 		{
 			if(parameters.MaxCapacity <= 0) throw new ArgumentException("The max capacity must be greater than zero.");
 			this.parameters = parameters;
+			if(parameters.GroupReturnedItems)
+			{
+				var name = string.IsNullOrEmpty(this.prefab.name) ? Guid.NewGuid().ToString() : this.prefab.name;
+				this.groupParent = new GameObject(name).transform;
+				this.groupParent.SetParent(this.itemsParent);
+			}
+			else if(this.groupParent is not null)
+			{
+				// Unparent all returned items if grouping was enabled and now disabled.
+				while(this.groupParent.childCount > 0)
+					this.groupParent.GetChild(0).SetParent(itemsParent, false);
+				Object.Destroy(this.groupParent.gameObject);
+			}
 		}
 
 		public void Prewarm(int number)
@@ -98,8 +117,7 @@ namespace Rayleigh.PrefabPool
 				this.DestroyObject(obj);
 			}
 
-			var tr = obj.transform;
-			tr.SetParent(this.itemsParent, false);
+			obj.transform.SetParent(this.groupParent ?? this.itemsParent, false);
 
 			var go = obj.gameObject;
 			Object.DontDestroyOnLoad(go);

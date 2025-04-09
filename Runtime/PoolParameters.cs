@@ -32,6 +32,9 @@ namespace Rayleigh.PrefabPool
 		/// they will be left as is.
 		/// </summary>
 		public bool ActivateOnGet => this.activateOnGet;
+		
+		/// <inheritdoc cref="IPoolParameters.GroupReturnedItems"/>
+		public bool GroupReturnedItems { get; }
 
 		/// <summary>
 		/// Creates new pool parameters.
@@ -40,15 +43,19 @@ namespace Rayleigh.PrefabPool
 		/// any instances returned to the pool will be destroyed and get methods will fail.</param>
 		/// <param name="activateOnGet">If set to true, instances taken from the pool will be active even if the prefab
 		/// is inactive; otherwise, they will be left as is.</param>
+		/// <param name="groupReturned">
+		/// If set to true, returned items are parented into an object with a name that matches the prefab name.
+		/// </param>
 		/// <param name="onCreate">The callback method to be called when the pool creates a new instance.</param>
 		/// <param name="onGet">The callback method to be called when an instance is taken from the pool.</param>
 		/// <param name="onRelease">The callback method to be called when an instance is returned to the pool.</param>
 		/// <param name="onDestroy">The callback method to be called when an instance is destroyed.</param>
-		public PoolParameters(int maxCapacity = int.MaxValue, bool activateOnGet = true, Action<T> onCreate = null,
-			Action<T> onGet = null, Action<T> onRelease = null, Action<T> onDestroy = null)
+		public PoolParameters(int maxCapacity = int.MaxValue, bool activateOnGet = true, bool groupReturned = false,
+			Action<T> onCreate = null, Action<T> onGet = null, Action<T> onRelease = null, Action<T> onDestroy = null)
 		{
 			this.maxCapacity = maxCapacity;
 			this.activateOnGet = activateOnGet;
+			this.GroupReturnedItems = groupReturned;
 			this.onCreate = onCreate;
 			this.onGet = onGet;
 			this.onRelease = onRelease;

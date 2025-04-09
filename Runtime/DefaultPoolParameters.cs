@@ -10,6 +10,8 @@ namespace Rayleigh.PrefabPool
 		public int MaxCapacity => int.MaxValue;
 
 		public bool ActivateOnGet => true;
+
+		public bool GroupReturnedItems => false;
 		
 		public void InvokeOnCreate(Component obj)
 		{
