@@ -205,6 +205,19 @@ namespace Rayleigh.PrefabPool.Tests
 			Assert.That(instance.ReleaseCalled, Is.True);
 			Assert.That(instance.DestroyCalled, Is.True);
 		}
+
+		[Test]
+		public void ParentingReturnedItems()
+		{
+			const string parentName = "test parent";
+			var pool = new PrefabPool(parentName);
+			var parentObject = GameObject.Find(parentName);
+			Assert.That(parentObject, Is.Not.Null);
+			var instance = pool.Get(this.prefab);
+			Assert.That(instance.parent, Is.Null);
+			pool.Release(instance);
+			Assert.That(instance.parent, Is.Not.Null);
+		}
 		
 		private static void AssertCount(PrefabPool pool, Component prefab, int all, int inactive, int active)
 		{
