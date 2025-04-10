@@ -14,18 +14,18 @@ namespace Rayleigh.PrefabPool
         /// <summary>
         /// Internal pools, one for each prefab used. The key is the instance ID of the prefab used for the pool.
         /// </summary>
-		private readonly Dictionary<int, InternalPool> pools;
+		private readonly Dictionary<int, InternalPool> _pools;
 
         /// <summary>
         /// Stores relations between objects taken from the pool and corresponding internal pools.
         /// </summary>
-        private readonly Dictionary<int, InternalPool> relations;
+        private readonly Dictionary<int, InternalPool> _relations;
 
         /// <summary>
         /// An object used as a parent for items returned to the pool.
         /// </summary>
         [MaybeNull]
-        private readonly Transform itemsParent;
+        private readonly Transform _itemsParent;
         
         /// <summary>
         /// Creates new prefab pool.
@@ -36,14 +36,14 @@ namespace Rayleigh.PrefabPool
         /// </param>
         public PrefabPool(string itemsParentName = null)
         {
-            this.pools = new();
-            this.relations = new();
+            _pools = new();
+            _relations = new();
             if (!string.IsNullOrEmpty(itemsParentName))
             {
                 var parentObject = new GameObject(itemsParentName);
                 Object.DontDestroyOnLoad(parentObject);
                 parentObject.SetActive(false);
-                this.itemsParent = parentObject.transform;
+                _itemsParent = parentObject.transform;
             }
         }
 
@@ -55,14 +55,14 @@ namespace Rayleigh.PrefabPool
         /// <typeparam name="T">Type of the prefab.</typeparam>
         /// <exception cref="ArgumentException">Specified max capacity is lower or equal to zero.</exception>
         public void Configure<T>(T prefab, PoolParameters<T> parameters) where T : Component =>
-            this.GetOrCreatePool(prefab).SetParameters(parameters);
+            GetOrCreatePool(prefab).SetParameters(parameters);
 
         /// <summary>
         /// Creates a specified number of prefab instances in the pool. 
         /// </summary>
         /// <param name="prefab">Prefab for which to create instances.</param>
         /// <param name="number">The number of instances to create.</param>
-        public void Prewarm(Component prefab, int number) => this.GetOrCreatePool(prefab).Prewarm(number);
+        public void Prewarm(Component prefab, int number) => GetOrCreatePool(prefab).Prewarm(number);
 
         /// <summary>
         /// Returns the total number of active (taken from the pool) and inactive (in the pool) instances
@@ -70,21 +70,21 @@ namespace Rayleigh.PrefabPool
         /// </summary>
         /// <param name="prefab">Prefab for which to return the total number of instances.</param>
         /// <returns>The total number of active and inactive instances.</returns>
-        public int CountAll(Component prefab) => this.GetOrCreatePool(prefab).CountAll;
+        public int CountAll(Component prefab) => GetOrCreatePool(prefab).CountAll;
         
         /// <summary>
         /// Returns the number of instances created by the pool but are currently in use.
         /// </summary>
         /// <param name="prefab">Prefab for which to return the number of active instances.</param>
         /// <returns>The number of available instances.</returns>
-        public int CountActive(Component prefab) => this.GetOrCreatePool(prefab).CountActive;
+        public int CountActive(Component prefab) => GetOrCreatePool(prefab).CountActive;
         
         /// <summary>
         /// Returns the number of instances that are available in the pool.
         /// </summary>
         /// <param name="prefab">Prefab for which to return the number of inactive instances.</param>
         /// <returns>The number of instances available in the pool.</returns>
-        public int CountInactive(Component prefab) => this.GetOrCreatePool(prefab).CountInactive;
+        public int CountInactive(Component prefab) => GetOrCreatePool(prefab).CountInactive;
 
         /// <summary>
         /// Gets an instance of specified prefab from the pool.
@@ -99,8 +99,9 @@ namespace Rayleigh.PrefabPool
             var pool = this.GetOrCreatePool(prefab);
             var result = pool.TryGet(out var cmp);
             obj = (T)cmp;
-            if(!result) return false;
-            this.relations[obj.GetInstanceID()] = pool;
+            if (!result)
+                return false;
+            _relations[obj.GetInstanceID()] = pool;
             return true;
         }
 
@@ -109,9 +110,9 @@ namespace Rayleigh.PrefabPool
         /// </summary>
         /// <param name="prefab">Prefab of the instance to get.</param>
         /// <typeparam name="T">Type of the prefab.</typeparam>
-        /// <returns>Instance of specified prefab from the pool</returns>
+        /// <returns>Instance of a specified prefab from the pool</returns>
         /// <exception cref="InvalidOperationException">If the max capacity is reached.</exception>
-        public T Get<T>(T prefab) where T : Component => this.TryGet(prefab, out var obj)
+        public T Get<T>(T prefab) where T : Component => TryGet(prefab, out var obj)
             ? obj
             : throw new InvalidOperationException("The pool for this prefab has reached its max capacity.");
 
@@ -122,7 +123,7 @@ namespace Rayleigh.PrefabPool
         /// <exception cref="InvalidOperationException">The specified instance was not created by this pool.</exception>
         public void Release(Component obj)
         {
-            if(!this.relations.Remove(obj.GetInstanceID(), out var poolObj))
+            if (!_relations.Remove(obj.GetInstanceID(), out var poolObj))
             {
                 throw new InvalidOperationException(
                     "The specified object was not created by this pool, so it cannot be released.");
@@ -135,32 +136,28 @@ namespace Rayleigh.PrefabPool
         /// Destroys all instances in the pool for specified prefab.
         /// </summary>
         /// <param name="prefab">Prefab which instances to destroy.</param>
-        public void ClearInactive(Component prefab) => this.GetOrCreatePool(prefab).ClearInactive();
-        
+        public void ClearInactive(Component prefab) => GetOrCreatePool(prefab).ClearInactive();
+
         /// <summary>
         /// Destroys all instances in the pool.
         /// </summary>
         public void ClearInactive()
         {
-            foreach(var pool in this.pools.Values) pool.ClearInactive();
+            foreach (var pool in _pools.Values)
+                pool.ClearInactive();
         }
 
         private InternalPool GetOrCreatePool(Component prefab)
         {
             var prefabId = prefab.GetInstanceID();
-            InternalPool pool;
-            
-            if(this.pools.TryGetValue(prefabId, out var objPool))
-            {
-                pool = objPool;
-            }
-            else
-            {
-                pool = new(prefab, new DefaultPoolParameters(), this.itemsParent);
-                this.pools.Add(prefabId, pool);
-            }
-            
+
+            if (_pools.TryGetValue(prefabId, out var objPool))
+                return objPool;
+
+            var pool = new InternalPool(prefab, new DefaultPoolParameters(), _itemsParent);
+            _pools.Add(prefabId, pool);
+
             return pool;
         }
-	}
+    }
 }

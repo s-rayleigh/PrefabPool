@@ -8,34 +8,34 @@ namespace Rayleigh.PrefabPool
 {
 	internal sealed class InternalPool
 	{
-		private readonly Component prefab;
+		private readonly Component _prefab;
 		
-		private IPoolParameters parameters;
+		private IPoolParameters _parameters;
 		
-		private readonly Stack<Component> stack;
+		private readonly Stack<Component> _stack;
 
-		/// <inheritdoc cref="PrefabPool.itemsParent"/>
+		/// <inheritdoc cref="PrefabPool._itemsParent"/>
 		[MaybeNull]
-		private readonly Transform itemsParent;
+		private readonly Transform _itemsParent;
 
 		/// <summary>
 		/// An object used for grouping of returned items if that's enabled in the pool configuration.
 		/// </summary>
 		[MaybeNull]
-		private Transform groupParent;
+		private Transform _groupParent;
 		
 		public int CountAll { get; private set; }
 
-		public int CountInactive => this.stack.Count;
+		public int CountInactive => _stack.Count;
 
-		public int CountActive => this.CountAll - this.CountInactive;
+		public int CountActive => CountAll - CountInactive;
 		
 		public InternalPool(Component prefab, IPoolParameters parameters, [MaybeNull] Transform itemsParent)
 		{
-			this.prefab = prefab;
-			this.parameters = parameters;
-			this.stack = new();
-			this.itemsParent = itemsParent;
+			_prefab = prefab;
+			_parameters = parameters;
+			_stack = new();
+			_itemsParent = itemsParent;
 		}
 
 		/// <summary>
@@ -45,123 +45,124 @@ namespace Rayleigh.PrefabPool
 		/// <exception cref="ArgumentException">Specified max capacity is lower or equal to zero.</exception>
 		public void SetParameters(IPoolParameters parameters)
 		{
-			if(parameters.MaxCapacity <= 0) throw new ArgumentException("The max capacity must be greater than zero.");
-			
-			var prevGroupReturned = this.parameters.GroupReturnedItems;
-			this.parameters = parameters;
-			
-			if(parameters.GroupReturnedItems && !prevGroupReturned)
+			if (parameters.MaxCapacity <= 0)
+				throw new ArgumentException("The max capacity must be greater than zero.");
+
+			var prevGroupReturned = _parameters.GroupReturnedItems;
+			_parameters = parameters;
+
+			if (parameters.GroupReturnedItems && !prevGroupReturned)
 			{
-				var name = string.IsNullOrEmpty(this.prefab.name)
-					? Guid.NewGuid().ToString()
-					: this.prefab.name + "_Group";
+				var name = string.IsNullOrEmpty(_prefab.name) ? Guid.NewGuid().ToString() : _prefab.name + "_Group";
 				var groupObject = new GameObject(name);
-				this.groupParent = groupObject.transform;
-				if (this.itemsParent is not null)
+				_groupParent = groupObject.transform;
+				if (_itemsParent is not null)
 					Object.DontDestroyOnLoad(groupObject);
-				this.groupParent.SetParent(this.itemsParent);
+				_groupParent.SetParent(_itemsParent);
 				groupObject.SetActive(false);
-				
+
 				// Re-parent all returned items.
-				foreach (var returned in this.stack)
-					returned.transform.SetParent(this.groupParent, false);
+				foreach (var returned in _stack)
+					returned.transform.SetParent(_groupParent, false);
 			}
-			
-			if(!parameters.GroupReturnedItems && this.groupParent is not null)
+
+			if (!parameters.GroupReturnedItems && _groupParent is not null)
 			{
 				// Unparent all returned items if grouping was enabled and now disabled.
-				while(this.groupParent.childCount > 0)
-					this.groupParent.GetChild(0).SetParent(itemsParent, false);
-				Object.Destroy(this.groupParent.gameObject);
+				while (_groupParent.childCount > 0)
+					_groupParent.GetChild(0).SetParent(_itemsParent, false);
+				Object.Destroy(_groupParent.gameObject);
 			}
 		}
 
 		public void Prewarm(int number)
 		{
-			number = Mathf.Min(number, this.parameters.MaxCapacity - this.CountAll);
-			this.CountAll += number;
+			number = Mathf.Min(number, _parameters.MaxCapacity - CountAll);
+			CountAll += number;
 
-			for(var i = 0; i < number; i++)
+			for (var i = 0; i < number; i++)
 			{
-				var instance = this.CreateNewInstance();
+				var instance = CreateNewInstance();
 				instance.gameObject.SetActive(false);
-				this.stack.Push(instance);
+				_stack.Push(instance);
 			}
 		}
 
 		public bool TryGet(out Component item)
 		{
-			if(this.stack.Count > 0)
+			if (_stack.Count > 0)
 			{
-				item = this.stack.Pop();
+				item = _stack.Pop();
 			}
 			else
 			{
 				item = null;
-				
-				if(this.CountAll >= this.parameters.MaxCapacity) return false;
-				this.CountAll += 1;
-				
-				item = this.CreateNewInstance();
+				if (CountAll >= _parameters.MaxCapacity)
+					return false;
+				CountAll += 1;
+				item = CreateNewInstance();
 			}
-			
-			if(this.parameters.ActivateOnGet) item.gameObject.SetActive(true);
-			
-			this.parameters.InvokeOnGet(item);
-			if(item is IPoolGetHandler gh) gh.OnPoolGet();
-			
+
+			if (_parameters.ActivateOnGet)
+				item.gameObject.SetActive(true);
+			_parameters.InvokeOnGet(item);
+			if (item is IPoolGetHandler gh)
+				gh.OnPoolGet();
+
 			return true;
 		}
 
 		public void Release(Component obj)
 		{
-			if(!obj)
+			if (!obj)
 			{
 				// Decrement instances count and return if the releasing object is null or destroyed.
-				this.CountAll -= 1;
+				CountAll -= 1;
 				return;
 			}
-			
-			this.parameters.InvokeOnRelease(obj);
-			if(obj is IPoolReleaseHandler h) h.OnPoolRelease();
 
-			if(this.CountAll >= this.parameters.MaxCapacity)
+			_parameters.InvokeOnRelease(obj);
+			if (obj is IPoolReleaseHandler h)
+				h.OnPoolRelease();
+
+			if (CountAll >= _parameters.MaxCapacity)
 			{
-				this.CountAll -= 1;
-				this.DestroyObject(obj);
+				CountAll -= 1;
+				DestroyObject(obj);
 			}
 
 			var go = obj.gameObject;
-			var parent = this.groupParent ?? this.itemsParent;
+			var parent = _groupParent ?? _itemsParent;
 			if (parent is not null)
 				Object.DontDestroyOnLoad(go);
 			obj.transform.SetParent(parent, false);
 			go.SetActive(false);
 
-			this.stack.Push(obj);
+			_stack.Push(obj);
 		}
-		
+
 		public void ClearInactive()
 		{
-			while(this.stack.TryPop(out var item))
+			while (_stack.TryPop(out var item))
 			{
-				this.DestroyObject(item);
-				this.CountAll -= 1;
+				DestroyObject(item);
+				CountAll -= 1;
 			}
 		}
 
 		private Component CreateNewInstance()
 		{
-			var instance = Object.Instantiate(this.prefab);
+			var instance = Object.Instantiate(_prefab);
 			Object.DontDestroyOnLoad(instance.gameObject);
-			this.parameters.InvokeOnCreate(instance);
+			_parameters.InvokeOnCreate(instance);
 			return instance;
 		}
 		
 		private void DestroyObject(Component obj)
 		{
-			if(obj is IPoolDestroyHandler dh) dh.OnPoolDestroy();
-			this.parameters.InvokeOnDestroy(obj);
+			if(obj is IPoolDestroyHandler dh)
+				dh.OnPoolDestroy();
+			_parameters.InvokeOnDestroy(obj);
 			Object.Destroy(obj.gameObject);
 		}
 	}

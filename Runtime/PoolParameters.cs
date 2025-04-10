@@ -9,30 +9,17 @@ namespace Rayleigh.PrefabPool
 	/// <typeparam name="T">Type of the prefab.</typeparam>
 	public readonly struct PoolParameters<T> : IPoolParameters where T : Component
 	{
-		private readonly int maxCapacity;
+		private readonly Action<T> _onCreate;
+		private readonly Action<T> _onGet;
+		private readonly Action<T> _onRelease;
+		private readonly Action<T> _onDestroy;
 
-		private readonly bool activateOnGet;
+		/// <inheritdoc cref="IPoolParameters.MaxCapacity"/>
+		public int MaxCapacity { get; }
 
-		private readonly Action<T> onCreate;
+		/// <inheritdoc cref="IPoolParameters.ActivateOnGet"/>
+		public bool ActivateOnGet { get; }
 
-		private readonly Action<T> onGet;
-
-		private readonly Action<T> onRelease;
-
-		private readonly Action<T> onDestroy;
-
-		/// <summary>
-		/// The max capacity of the pool. When the pool reaches its max capacity,
-		/// any instances returned to the pool will be destroyed and get methods will fail.
-		/// </summary>
-		public int MaxCapacity => this.maxCapacity;
-		
-		/// <summary>
-		/// If set to true, instances taken from the pool will be active even if the prefab is inactive; otherwise,
-		/// they will be left as is.
-		/// </summary>
-		public bool ActivateOnGet => this.activateOnGet;
-		
 		/// <inheritdoc cref="IPoolParameters.GroupReturnedItems"/>
 		public bool GroupReturnedItems { get; }
 
@@ -53,21 +40,21 @@ namespace Rayleigh.PrefabPool
 		public PoolParameters(int maxCapacity = int.MaxValue, bool activateOnGet = true, bool groupReturned = false,
 			Action<T> onCreate = null, Action<T> onGet = null, Action<T> onRelease = null, Action<T> onDestroy = null)
 		{
-			this.maxCapacity = maxCapacity;
-			this.activateOnGet = activateOnGet;
-			this.GroupReturnedItems = groupReturned;
-			this.onCreate = onCreate;
-			this.onGet = onGet;
-			this.onRelease = onRelease;
-			this.onDestroy = onDestroy;
+			MaxCapacity = maxCapacity;
+			ActivateOnGet = activateOnGet;
+			GroupReturnedItems = groupReturned;
+			_onCreate = onCreate;
+			_onGet = onGet;
+			_onRelease = onRelease;
+			_onDestroy = onDestroy;
 		}
 
-		public void InvokeOnCreate(Component obj) => this.onCreate?.Invoke((T)obj);
+		public void InvokeOnCreate(Component obj) => _onCreate?.Invoke((T)obj);
 
-		public void InvokeOnGet(Component obj) => this.onGet?.Invoke((T)obj);
+		public void InvokeOnGet(Component obj) => _onGet?.Invoke((T)obj);
 
-		public void InvokeOnRelease(Component obj) => this.onRelease?.Invoke((T)obj);
+		public void InvokeOnRelease(Component obj) => _onRelease?.Invoke((T)obj);
 
-		public void InvokeOnDestroy(Component obj) => this.onDestroy?.Invoke((T)obj);
+		public void InvokeOnDestroy(Component obj) => _onDestroy?.Invoke((T)obj);
 	}
 }

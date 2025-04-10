@@ -10,10 +10,10 @@ namespace Rayleigh.PrefabPool.Tests
 		
 		public bool DestroyCalled { get; private set; }
 		
-		public void OnPoolGet() => this.GetCalled = true;
+		public void OnPoolGet() => GetCalled = true;
 
-		public void OnPoolRelease() => this.ReleaseCalled = true;
+		public void OnPoolRelease() => ReleaseCalled = true;
 
-		public void OnPoolDestroy() => this.DestroyCalled = true;
+		public void OnPoolDestroy() => DestroyCalled = true;
 	}
 }

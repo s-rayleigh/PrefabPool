@@ -9,12 +9,12 @@ namespace Rayleigh.PrefabPool
 	/// </summary>
 	public static class GlobalPrefabPool
 	{
-		private static PrefabPool instance;
+		private static PrefabPool _instance;
 
 		/// <summary>
 		/// An instance of the global prefab pool.
 		/// </summary>
-		public static PrefabPool Instance => instance ??= new();
+		public static PrefabPool Instance => _instance ??= new();
 
 		/// <summary>
 		/// Sets specified parameters for the global pool.

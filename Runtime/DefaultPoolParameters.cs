@@ -12,25 +12,21 @@ namespace Rayleigh.PrefabPool
 		public bool ActivateOnGet => true;
 
 		public bool GroupReturnedItems => false;
-		
+
 		public void InvokeOnCreate(Component obj)
 		{
-			
 		}
 
 		public void InvokeOnGet(Component obj)
 		{
-			
 		}
 
 		public void InvokeOnRelease(Component obj)
 		{
-			
 		}
 
 		public void InvokeOnDestroy(Component obj)
 		{
-			
 		}
 	}
 }

@@ -4,8 +4,16 @@ namespace Rayleigh.PrefabPool
 {
 	internal interface IPoolParameters
 	{
+		/// <summary>
+		/// The max capacity of the pool. When the pool reaches its max capacity,
+		/// any instances returned to the pool will be destroyed and get methods will fail.
+		/// </summary>
 		int MaxCapacity { get; }
 		
+		/// <summary>
+		/// If set to true, instances taken from the pool will be active even if the prefab is inactive; otherwise,
+		/// they will be left as is.
+		/// </summary>
 		bool ActivateOnGet { get; }
 		
 		/// <summary>
