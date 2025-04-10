@@ -46,14 +46,28 @@ namespace Rayleigh.PrefabPool
 		public void SetParameters(IPoolParameters parameters)
 		{
 			if(parameters.MaxCapacity <= 0) throw new ArgumentException("The max capacity must be greater than zero.");
+			
+			var prevGroupReturned = this.parameters.GroupReturnedItems;
 			this.parameters = parameters;
-			if(parameters.GroupReturnedItems)
+			
+			if(parameters.GroupReturnedItems && !prevGroupReturned)
 			{
-				var name = string.IsNullOrEmpty(this.prefab.name) ? Guid.NewGuid().ToString() : this.prefab.name;
-				this.groupParent = new GameObject(name).transform;
+				var name = string.IsNullOrEmpty(this.prefab.name)
+					? Guid.NewGuid().ToString()
+					: this.prefab.name + "_Group";
+				var groupObject = new GameObject(name);
+				this.groupParent = groupObject.transform;
+				if (this.itemsParent is not null)
+					Object.DontDestroyOnLoad(groupObject);
 				this.groupParent.SetParent(this.itemsParent);
+				groupObject.SetActive(false);
+				
+				// Re-parent all returned items.
+				foreach (var returned in this.stack)
+					returned.transform.SetParent(this.groupParent, false);
 			}
-			else if(this.groupParent is not null)
+			
+			if(!parameters.GroupReturnedItems && this.groupParent is not null)
 			{
 				// Unparent all returned items if grouping was enabled and now disabled.
 				while(this.groupParent.childCount > 0)
@@ -117,10 +131,11 @@ namespace Rayleigh.PrefabPool
 				this.DestroyObject(obj);
 			}
 
-			obj.transform.SetParent(this.groupParent ?? this.itemsParent, false);
-
 			var go = obj.gameObject;
-			Object.DontDestroyOnLoad(go);
+			var parent = this.groupParent ?? this.itemsParent;
+			if (parent is not null)
+				Object.DontDestroyOnLoad(go);
+			obj.transform.SetParent(parent, false);
 			go.SetActive(false);
 
 			this.stack.Push(obj);

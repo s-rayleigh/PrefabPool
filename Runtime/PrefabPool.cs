@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Rayleigh.PrefabPool
 {
@@ -38,7 +39,12 @@ namespace Rayleigh.PrefabPool
             this.pools = new();
             this.relations = new();
             if (!string.IsNullOrEmpty(itemsParentName))
-                this.itemsParent = new GameObject(itemsParentName).transform;
+            {
+                var parentObject = new GameObject(itemsParentName);
+                Object.DontDestroyOnLoad(parentObject);
+                parentObject.SetActive(false);
+                this.itemsParent = parentObject.transform;
+            }
         }
 
         /// <summary>
