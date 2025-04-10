@@ -17,6 +17,21 @@ namespace Rayleigh.PrefabPool
 		public static PrefabPool Instance => _instance ??= new();
 
 		/// <summary>
+		/// Initializes a global pool by creating a prefab pool instance. 
+		/// </summary>
+		/// <param name="factory">Factory method to create an instance of the <see cref="PrefabPool"/>.</param>
+		/// <exception cref="InvalidOperationException">If global pool already initialized.</exception>
+		/// <exception cref="ArgumentNullException">If the factory method is null.</exception>
+		public static void Init(Func<PrefabPool> factory)
+		{
+			if (_instance is not null)
+				throw new InvalidOperationException("The instance already created.");
+			if (factory is null)
+				throw new ArgumentNullException(nameof(factory));
+			_instance = factory();
+		}
+		
+		/// <summary>
 		/// Sets specified parameters for the global pool.
 		/// </summary>
 		/// <param name="prefab">The prefab for which to configure a pool.</param>
