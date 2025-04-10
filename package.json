@@ -1,14 +1,15 @@
 {
   "name": "com.rayleigh.prefab-pool",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Prefab Pool",
-  "description": "Efficient and lazy object pool, designed to use with the prefabs referenced by a component.",
-  "documentationUrl": "https://github.com/s-rayleigh/PrefabPool",
+  "description": "Simple and efficient object pool, designed to be used with prefabs referenced by a component.",
+  "documentationUrl": "https://github.com/s-rayleigh/PrefabPool/blob/main/README.md#usage",
   "keywords": [
     "pool",
     "object",
     "object pool",
-    "GameObjects",
+    "GameObject",
+    "MonoBehaviour",
     "optimization",
     "prefab"
   ],
