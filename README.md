@@ -30,6 +30,9 @@ You can access the pool in either of these ways:
 - Create an object of the `PrefabPool` class.
 - Use your favorite DI framework to inject the `PrefabPool` class.
 
+When creating a pool instance, you can also specify the name of the object to use as a parent for
+instances returned to the pool using the `itemsParentName` argument of a constructor.
+
 To get an object from the pool, use the `Get` or `TryGet` methods. The pool itself is prefab-oriented, so you need 
 to use prefab as an argument referenced by a component (e.g., `Transform` or any inherited from `MonoBehaviour`).
 
@@ -42,13 +45,14 @@ method. It also keeps track of the number of objects it has created, which you c
 
 You can also configure the pool **per prefab** using the `Configure` method and providing the `PoolParameters` struct, 
 which allows you to specify the following parameters:
-- The max capacity of the pool (`int.MaxValue` by default)
-- Whether to activate an object when it's taken from the pool (`true` by default)
-- Action to perform when the object is:
-  - Created by the pool
-  - Taken from the pool
-  - Returned to the pool
-  - Destroyed by the pool
+- `maxCapacity` – the max capacity of the pool (`int.MaxValue` by default).
+- `activateOnGet` – whether to activate an object when it's taken from the pool (`true` by default).
+- `groupReturned` – enables grouping returned instances into an object to simplify scene objects hierarchy navigation. 
+- Actions to perform:
+  - `onCreate` – when an object created by the pool.
+  - `onGet` – when an object taken from the pool.
+  - `onRelease` – when an object returned to the pool.
+  - `onDestroy` – when an object destroyed by the pool.
 
 You can adjust these parameters at any time.
 
@@ -61,7 +65,7 @@ argument to destroy only its instances.
 If you want to receive the events in the component through which the prefab is referenced, you can implement these 
 interfaces: `IPoolGetHandler`, `IPoolReleaseHandler`, and `IPoolDestroyHandler`.
 
-Please note that the pool is not thread-safe and is intended to be used on the Unity main thread.
+Please note that the pool is not thread-safe and is intended to be used on the Unity's main thread.
 
 # Examples
 ```csharp
