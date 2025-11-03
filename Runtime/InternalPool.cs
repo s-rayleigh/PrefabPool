@@ -133,9 +133,9 @@ namespace Rayleigh.PrefabPool
 
 			var go = obj.gameObject;
 			var parent = _groupParent ?? _itemsParent;
-			if (parent is not null)
-				Object.DontDestroyOnLoad(go);
 			obj.transform.SetParent(parent, false);
+			if (parent is null)
+				Object.DontDestroyOnLoad(go);
 			go.SetActive(false);
 
 			_stack.Push(obj);
