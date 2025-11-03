@@ -103,6 +103,9 @@ namespace Rayleigh.PrefabPool
 				item = CreateNewInstance();
 			}
 
+			// Reset the parent object for the item if it was grouped or parented when returned to the pool.
+			if (item.transform.parent is not null)
+				item.transform.SetParent(null, false);
 			if (_parameters.ActivateOnGet)
 				item.gameObject.SetActive(true);
 			_parameters.InvokeOnGet(item);
