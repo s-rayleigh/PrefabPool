@@ -4,6 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
+#if USE_ENTITY_ID
+using ObjectId = UnityEngine.EntityId;
+#else
+using ObjectId = System.Int32;
+#endif
+
 namespace Rayleigh.PrefabPool
 {
     /// <summary>
@@ -12,14 +18,15 @@ namespace Rayleigh.PrefabPool
 	public class PrefabPool
 	{
         /// <summary>
-        /// Internal pools, one for each prefab used. The key is the instance ID of the prefab used for the pool.
+        /// Internal pools, one for each prefab used. The key is the prefab ID.
         /// </summary>
-		private readonly Dictionary<int, InternalPool> _pools;
+		private readonly Dictionary<ObjectId, InternalPool> _pools;
 
         /// <summary>
         /// Stores relations between objects taken from the pool and corresponding internal pools.
+        /// The key is the object's ID.
         /// </summary>
-        private readonly Dictionary<int, InternalPool> _relations;
+        private readonly Dictionary<ObjectId, InternalPool> _relations;
 
         /// <summary>
         /// An object used as a parent for items returned to the pool.
@@ -101,7 +108,7 @@ namespace Rayleigh.PrefabPool
             obj = (T)cmp;
             if (!result)
                 return false;
-            _relations[obj.GetInstanceID()] = pool;
+            _relations[GetObjectId(obj)] = pool;
             return true;
         }
 
@@ -123,7 +130,7 @@ namespace Rayleigh.PrefabPool
         /// <exception cref="InvalidOperationException">The specified instance was not created by this pool.</exception>
         public void Release(Component obj)
         {
-            if (!_relations.Remove(obj.GetInstanceID(), out var poolObj))
+            if (!_relations.Remove(GetObjectId(obj), out var poolObj))
             {
                 throw new InvalidOperationException(
                     "The specified object was not created by this pool, so it cannot be released.");
@@ -149,7 +156,7 @@ namespace Rayleigh.PrefabPool
 
         private InternalPool GetOrCreatePool(Component prefab)
         {
-            var prefabId = prefab.GetInstanceID();
+            var prefabId = GetObjectId(prefab);
 
             if (_pools.TryGetValue(prefabId, out var objPool))
                 return objPool;
@@ -158,6 +165,15 @@ namespace Rayleigh.PrefabPool
             _pools.Add(prefabId, pool);
 
             return pool;
+        }
+        
+        private static ObjectId GetObjectId(Object obj)
+        {
+#if USE_ENTITY_ID
+            return obj.GetEntityId();
+#else
+            return obj.GetInstanceID();
+#endif
         }
     }
 }

@@ -9,6 +9,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "6000.4",
+            "define": "USE_ENTITY_ID"
+        }
+    ],
     "noEngineReferences": false
 }
